@@ -1,0 +1,59 @@
+#####################################################
+#						    #
+# promises.cf - main Cfengine 3 configuration file  #
+#						    #
+#####################################################
+
+body common control {
+
+    any::
+
+	bundlesequence => { @(g.bundlesequence) };
+
+    webservers::
+
+	bundlesequence => { @(g.bundlesequence), "webservers_bundle" };
+
+    site1::
+
+	domain => "site1.example.org";
+
+    site2::
+	
+	domain => "site2.example.org";
+
+    any:: 
+
+	inputs => {
+	    "update.cf",
+	    "library.cf",
+	    "classes.cf",
+	    "cf-execd.cf",
+	    "cf-serverd.cf",
+	    "cf-report.cf",
+	    "domain.cf",
+	    "packages.cf",
+	    "webservers.cf",
+	    "cleanup.cf"
+	};
+
+    output_prefix => "cf3>";
+}
+
+# global vars
+bundle common g {
+
+vars:
+
+    "workdir"		string => "/var/cfengine";
+    "masterfiles"	string => "$(workdir)/masterfiles";
+    "inputfiles"	string => "$(workdir)/inputs";
+    "policyhost"	string => "cfengine.example.org";
+    "bundlesequence"	slist  => { "update", "executor", "server", 
+				    "domain", "packages", "cleanup" };
+}
+
+body runagent control {
+    hosts => { "127.0.0.1", "10.1.16.0/20" };
+}
+

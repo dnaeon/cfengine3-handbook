@@ -1,0 +1,137 @@
+#!/usr/bin/env sh
+
+# 
+# pkg-upgrade - a wrapper tool for installing and upgrading packages
+#
+
+if [ $( id -u ) -ne 0 ]
+then
+	echo "$0: This program needs to be run as root."
+	return 77	# EX_PERM
+fi
+
+INSTALL_TOOL=/usr/sbin/pkg_add
+INSTALL_ARGS="-r"
+
+UPGRADE_TOOL=/usr/local/sbin/portmaster
+UPGRADE_ARGS="-y -d -B -PP"
+
+PKG_ARCH=$( uname -m )
+PKG_RELEASE=$( uname -r | cut -d '-' -f 1 )
+
+PROGNAME=$( basename -- $0 )
+
+# package name and version
+pkg_name=$1
+pkg_ver=$2
+
+#
+# set_packagesite()
+# Sets the PACKAGESITE environment variable to the local FTP server
+# Set the PACKAGESITE variable to your local FTP servers below
+#
+
+set_packagesite() {
+	case "${PKG_RELEASE}" in
+		8.0)
+			PACKAGESITE="ftp://ftp.sofia.unix-heaven.org/8.0-FreeBSD-${PKG_ARCH}/All/"
+			;;
+		8.1)
+			PACKAGESITE="ftp://ftp.sofia.unix-heaven.org/8.1-FreeBSD-${PKG_ARCH}/All/"
+			;;
+		8.2)
+			PACKAGESITE="ftp://ftp.sofia.unix-heaven.org/8.2-FreeBSD-${PKG_ARCH}/All/"
+			;;
+		9.0)
+			PACKAGESITE="ftp://ftp.sofia.unix-heaven.org/9-CURRENT-FreeBSD-${PKG_ARCH}/All/"
+			;;
+	esac
+
+	[ ! -z ${PACKAGESITE} ] && export PACKAGESITE=${PACKAGESITE}
+}
+
+#
+# usage()
+# Displays usage information
+#
+
+usage() {
+	echo -e "Usage: ${PROGNAME} <pkg-name> <pkg-version>\n" >&2
+	echo "${PROGNAME} installs or upgrades a package to a specific version." >&2
+	echo "Example usage: ${PROGNAME} rsync 3.0.8" >&2
+	exit 1
+}
+
+#
+# install_pkg()
+# Installs a package if it is not currently installed.
+#
+
+install_pkg() {
+
+	echo "${PROGNAME}: Starting installation of package ${pkg_name}-${pkg_ver}"
+	${INSTALL_TOOL} ${INSTALL_ARGS} ${pkg_name}-${pkg_ver}
+}
+
+# 
+# upgrade_pkg()
+# Upgrades a package to a newer version
+#
+
+upgrade_pkg() {
+
+	# a package is upgraded only if there is an older version of the package
+	# that is already installed, otherwise we do nothing
+	installed_ver=$( pkg_info -E "${pkg_name}<${pkg_ver}" | sed -e "s|${pkg_name}-||" )
+
+	if [ ! -z "${installed_ver}" ]
+	then
+		echo "${PROGNAME}: Older version of ${pkg_name} is installed already: ${pkg_name}-${installed_ver}"
+		echo "${PROGNAME}: Starting upgrade of ${pkg_name}-${installed_ver} to ${pkg_name}-${pkg_ver}"
+		${UPGRADE_TOOL} ${UPGRADE_ARGS} ${pkg_name}
+	fi
+
+	# if there is a newer version of the package already installed we do nothing
+	installed_ver=$( pkg_info -E "${pkg_name}>${pkg_ver}" | sed -e "s|${pkg_name}-||" )
+
+	if [ ! -z "${installed_ver}" ]
+	then
+		echo "${PROGNAME}: Newer version of ${pkg_name} is installed already: ${pkg_name}-${installed_ver}"
+		echo "${PROGNAME}: Nothing to be done for package ${pkg_name}"
+	fi
+}
+
+#
+# process_pkg()
+# Processes the package for installation or upgrade
+#
+
+process_pkg() {
+
+	echo "${PROGNAME}: Checking if ${pkg_name}-${pkg_ver} is installed"
+
+	if pkg_info -qE ${pkg_name}-${pkg_ver}
+	then
+		echo "${PROGNAME}: Package ${pkg_name}-${pkg_ver} is installed already"
+	else
+		echo "${PROGNAME}: Package ${pkg_name}-${pkg_ver} is not installed"
+
+		# check if there is any version of the package installed already
+		# and if so, then try to upgrade it
+		if pkg_info -qE "${pkg_name}>0"
+		then
+			upgrade_pkg
+		else
+			# there is no version of the package installed already,
+			# so we will install it instead
+			install_pkg
+		fi
+	fi
+}
+
+
+[ "$#" -ne 2 ] && usage
+
+set_packagesite
+process_pkg
+

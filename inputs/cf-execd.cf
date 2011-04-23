@@ -1,0 +1,37 @@
+#####################################
+#				    #	
+# cf-execd.cf - Cfengine 3 Executor #
+#				    #	     
+#####################################
+
+body executor control {
+    splaytime		=> "1";
+    mailto		=> "admin@example.org";
+    mailfrom		=> "cfengine@example.org";
+    smtpserver		=> "mail.example.org";
+    mailmaxlines	=> "100";
+    schedule		=> { "Min05" };
+    executorfacility	=> "LOG_DAEMON";
+}
+
+# Make sure the executor is running
+bundle agent executor {
+
+vars:
+
+    "rc_d" string => "/usr/local/etc/rc.d";
+
+processes:
+
+    "cf-execd"
+    
+	comment	      => "Make sure that cf-execd runs on all hosts",
+	restart_class => "start_cfexecd";
+
+commands:
+
+    start_cfexecd::
+
+	"$(rc_d)/cf-execd start";
+}
+

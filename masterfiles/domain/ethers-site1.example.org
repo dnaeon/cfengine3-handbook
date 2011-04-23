@@ -1,0 +1,4 @@
+# Ethernet address database for domain site1.example.org
+
+00:00:00:00:00:11   host1.site1.example.org
+00:00:00:00:00:22   host2.site1.example.org

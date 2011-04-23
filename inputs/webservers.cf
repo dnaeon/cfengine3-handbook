@@ -1,0 +1,76 @@
+#####################################################
+#                                                   #
+# webservers.cf - Promises for managing webservers  #
+#                                                   #
+#####################################################
+
+bundle agent webservers_bundle {
+
+vars:
+
+    "rc_d"	    string => "/usr/local/etc/rc.d";
+   
+    # packages are defined in the following form:
+    # pkg[<pkg-name>] string => "<pkg-version>" 
+
+    "pkg[apache]"   string => "2.2.17_1";
+
+    "package_name"  slist  => getindices("pkg");
+
+files:
+
+    "/var/log/apache/."
+
+	comment	    => "Create Apache log directory",
+	create	    => "true",
+	perms	    => mog("0755", "www", "www");
+	
+    "/usr/local/etc/apache22/httpd.conf"
+
+	comment	    => "Copy Apache configuration file for $(sys.fqhost)",
+	create	    => "true",
+	perms	    => mog("0644", "root", "wheel"),
+	copy_from   => remote_copy("$(g.masterfiles)/apache/httpd.conf-$(sys.fqhost)", "$(g.policyhost)"),
+	classes	    => if_ok("reload_apache");
+
+    "/usr/local/etc/apache22/extra/httpd-default.conf"
+	
+        comment     => "Copy default Apache settings file - httpd-default.conf",
+        create      => "true",
+        perms       => mog("0644", "root", "wheel"),
+        copy_from   => remote_copy("$(g.masterfiles)/apache/httpd-default.conf", "$(g.policyhost)"),
+	classes	    => if_ok("reload_apache");
+
+    "/usr/local/etc/apache22/extra/httpd-vhosts.conf"
+
+        comment     => "Copy Apache vhosts configuration for $(sys.fqhost)",
+        create      => "true",
+        perms       => mog("0644", "root", "wheel"),
+        copy_from   => remote_copy("$(g.masterfiles)/apache/httpd-vhosts.conf-$(sys.fqhost)", "$(g.policyhost)"),
+	classes	    => if_ok("reload_apache");
+
+packages:
+
+    "$(package_name)"
+	
+	package_policy  => "add",
+	package_method  => freebsd_pkg_install,
+	package_version => "$(pkg[$(package_name)])";
+
+processes:
+
+    "httpd"
+
+	comment		=> "Make sure that Apache runs on the webservers",
+	restart_class	=> "start_apache";
+
+commands:
+
+    start_apache::
+
+	"$(rc_d)/apache22 start";
+
+    reload_apache::
+
+	"$(rc_d)/apache22 graceful";
+}

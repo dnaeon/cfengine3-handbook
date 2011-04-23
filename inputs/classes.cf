@@ -1,0 +1,43 @@
+#################################################
+#						#
+# classes.cf - Cfengine 3 user-defined classes	#
+#						#
+#################################################
+
+bundle common myclasses {
+
+vars:
+
+    "sysctl_jailed" string => execresult("/sbin/sysctl -n security.jail.jailed", "noshell");
+
+classes:
+
+    "freebsd_jail" expression => strcmp("$(sysctl_jailed)", "1");
+    "freebsd_host" expression => strcmp("$(sysctl_jailed)", "0");
+
+    "site1" or => {
+        classify("www.site1.example.org"),
+        classify("www-proxy.site1.example.org"),
+        classify("svn.site1.example.org"),
+        classify("pkgmaster.site1.example.org"),
+        classify("mysql.site1.example.org"),
+        classify("monitor.site1.example.org"),
+        classify("jail-test.site1.example.org")
+    };
+
+    "site2" or => {
+        classify("webserver.site2.example.org"),
+        classify("mail.site2.example.org"),
+	classify("squid.site2.example.org")
+    };
+
+    "webservers" or => {
+        classify("www.site1.example.org"),
+	classify("webserver.site2.example.org")
+    };
+
+    "policy_servers" or => {
+	classify("$(g.policyhost)")
+    };
+}
+

@@ -1,0 +1,3 @@
+domain site2.example.org
+search site2.example.org
+nameserver 10.100.32.1

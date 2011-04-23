@@ -1,0 +1,55 @@
+#####################################
+#				    #
+# cf-serverd.cf - Cfengine 3 Server #
+#				    #
+#####################################
+
+body server control {
+    skipverify          => { "10.1.16.0/20" };
+    allowconnects       => { "10.1.16.0/20" };
+    allowallconnects    => { "10.1.16.0/20" };
+    maxconnections      => "100";
+    logallconnections   => "true";
+    bindtointerface     => "x.x.x.x";
+    cfruncommand        => "$(sys.workdir)/bin/cf-agent";
+    allowusers          => { "root" };
+}
+
+# Make sure that the server is running on the policy servers
+bundle agent server {
+
+vars:
+
+    "rc_d" string => "/usr/local/etc/rc.d";
+
+processes:
+    
+    policy_servers::
+
+	"cf-serverd"
+	    
+	    comment	  => "Make sure cf-serverd runs on the policy servers",
+	    restart_class => "start_cfserverd";
+
+commands:
+
+    start_cfserverd::
+    
+	"$(rc_d)/cf-serverd start";
+}
+
+bundle server access_rules {
+
+access:
+
+    # Allow clients access to the input files
+    "$(g.inputfiles)"
+
+	admit => { "10.1.16.0/20" };
+
+    # Allow clients access to the masterfiles
+    "$(g.masterfiles)"
+	
+	admit => { "10.1.16.0/20" };
+}
+
