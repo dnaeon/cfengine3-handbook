@@ -1,34 +1,48 @@
 #####################################################
-#						    #
+#                                                   #
 # packages.cf - Promises for package installations  #
-#						    #
+#                                                   #
 #####################################################
 
 bundle agent packages { 
 
 vars:
 
-    # packages are defined in the following form:
-    # pkg[<pkg-name>] string => "<pkg-version>";
+	"freebsd_package_set" slist => { 
+                            "git-1.7.10.3",
+                            "emacs-23.4_1,2",
+                            "tmux-1.6",
+                            "sudo-1.8.5.p2",
+                            "zsh-4.3.17_3",
+                            "cfengine-3.3.3",
+                            "apg-2.3.0b_2",
+                            "ssmtp-2.64",
+                            "rsync-3.0.9"
+                            };
+files:
+			    
 
-    "pkg[bash]"			string => "4.1.9";
-    "pkg[cfengine]"		string => "3.1.4_1";
-    "pkg[portmaster]"		string => "3.6.1";
-    "pkg[pkg_add_it]"		string => "1.3.2";
-    "pkg[sudo]"			string => "1.8.1";
-    "pkg[tmux]"			string => "1.4_4";
-    "pkg[vim-lite]"		string => "7.3.121";
+	freebsd::
+				             
+		"/usr/local/etc/pkg.conf"
+		
+		comment         => "Copy pkgng configuration file for $(sys.fqhost)",
+            	perms           => mog("0644", "root", "wheel"),
+            	copy_from       => remote_copy("$(g.masterfiles)/pkgng/pkg.conf", "$(g.policyhost)"),
+            	classes         => if_repaired("update_pkgng_repo");
+	    		    
+commands:
 
-    "package_name"		slist  => getindices("pkg");
+	freebsd.update_pkgng_repo::
+        
+		"/usr/local/sbin/pkg update -f";
 
 packages:
 
-    sofia::
+        freebsd::
 
-	"$(package_name)"
+        "$(freebsd_package_set)"
 
-	    package_policy  => "add",
-	    package_method  => freebsd_pkg_install,
-	    package_version => "$(pkg[$(package_name)])";
+                package_policy  => "add",
+		package_method  => freebsd_pkgng;
 }
-
