@@ -43,6 +43,7 @@ packages:
 
         "$(freebsd_package_set)"
 
-                package_policy  => "add",
+                package_policy  => "addupdate",
+		package_select	=> ">=",
 		package_method  => freebsd_pkgng;
 }
