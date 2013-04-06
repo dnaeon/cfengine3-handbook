@@ -6,8 +6,7 @@
 
 body common control {
 
-    # Update input files on the clients
-    !f_policy_servers::
+    any::
 
 	bundlesequence => { "update" };
 
