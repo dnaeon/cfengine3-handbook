@@ -10,7 +10,7 @@ body server control {
     allowallconnects    => { "10.1.16.0/20" };
     maxconnections      => "100";
     logallconnections   => "true";
-    bindtointerface     => "x.x.x.x";
+    bindtointerface     => "0.0.0.0";
     cfruncommand        => "$(sys.workdir)/bin/cf-agent";
     allowusers          => { "root" };
 }
