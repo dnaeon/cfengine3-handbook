@@ -31,7 +31,7 @@ files:
 	create	    => "true",
 	perms	    => mog("0644", "root", "wheel"),
 	copy_from   => remote_copy("$(g.masterfiles)/apache/httpd.conf-$(sys.fqhost)", "$(g.policyhost)"),
-	classes	    => if_ok("reload_apache");
+	classes	    => if_repaired("reload_apache");
 
     "/usr/local/etc/apache22/extra/httpd-default.conf"
 	
@@ -39,7 +39,7 @@ files:
         create      => "true",
         perms       => mog("0644", "root", "wheel"),
         copy_from   => remote_copy("$(g.masterfiles)/apache/httpd-default.conf", "$(g.policyhost)"),
-	classes	    => if_ok("reload_apache");
+	classes	    => if_repaired("reload_apache");
 
     "/usr/local/etc/apache22/extra/httpd-vhosts.conf"
 
@@ -47,7 +47,7 @@ files:
         create      => "true",
         perms       => mog("0644", "root", "wheel"),
         copy_from   => remote_copy("$(g.masterfiles)/apache/httpd-vhosts.conf-$(sys.fqhost)", "$(g.policyhost)"),
-	classes	    => if_ok("reload_apache");
+	classes	    => if_repaired("reload_apache");
 
 packages:
 
