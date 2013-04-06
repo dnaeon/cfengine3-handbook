@@ -1221,8 +1221,8 @@ body package_method freebsd_pkgng
 
  package_name_convention => "$(name)-$(version)";
 
- package_update_command => "/usr/local/sbin/pkg update";
- package_add_command => "/usr/local/sbin/pkg install -L -y";
+ package_update_command => "/usr/local/sbin/pkg install -U -y";
+ package_add_command => "/usr/local/sbin/pkg install -U -y";
  package_delete_command => "/usr/local/sbin/pkg delete -y";
 }
 
